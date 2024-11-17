@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  name            String?
+  password        String
+  role            Role     @default(USER)
+  isEmailVerified Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  Token           Token[]
+}
+
+model Token {
+  id          Int       @id @default(autoincrement())
+  token       String
+  type        TokenType
+  expires     DateTime
+  blacklisted Boolean
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+  RESET_PASSWORD
+  VERIFY_EMAIL
+}
+
+model Campaign {
+  id            String     @id @default(uuid())
+  name          String
+  status        Status     @default(DRAFT)
+  type          String
+  maxResponses  Int
+  responseCount Int        @default(0)
+  questions     Question[]
+  responses     Response[]
+  insights      Insight[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([status])
+}
+
+model Question {
+  id         String       @id @default(uuid())
+  text       String
+  type       QuestionType
+  order      Int
+  options    String[]     @default([])
+  campaign   Campaign     @relation(fields: [campaignId], references: [id])
+  campaignId String
+  responses  Response[]
+
+  @@index([campaignId])
+}
+
+model Response {
+  id         String   @id @default(uuid())
+  answer     String
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+  createdAt  DateTime @default(now())
+
+  @@index([campaignId])
+  @@index([questionId])
+}
+
+model Insight {
+  id         String   @id @default(uuid())
+  summary    String   @db.Text
+  categories Json
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+  createdAt  DateTime @default(now())
+
+  @@index([campaignId])
+}
+
+enum Status {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  COMPLETED
+}
+
+enum QuestionType {
+  OPEN
+  MULTIPLE_CHOICE
+  RATING
+}
