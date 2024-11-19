@@ -1,4 +1,4 @@
-import { name, version, repository } from '../../package.json';
+import { name, version } from '../../package.json';
 import config from '../config/config';
 
 const swaggerDef = {
@@ -7,8 +7,7 @@ const swaggerDef = {
     title: `${name} API documentation`,
     version,
     license: {
-      name: 'MIT',
-      url: repository
+      name: 'MIT'
     }
   },
   servers: [
